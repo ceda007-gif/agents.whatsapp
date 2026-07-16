@@ -8,9 +8,18 @@ function required(name: string, fallback?: string): string {
   return value;
 }
 
+const aiProvider = (process.env.AI_PROVIDER ?? "gemini").toLowerCase();
+if (aiProvider !== "gemini" && aiProvider !== "anthropic") {
+  throw new Error(`AI_PROVIDER inválido: "${aiProvider}". Usa "gemini" o "anthropic".`);
+}
+
+const defaultModel = aiProvider === "gemini" ? "gemini-3.1-flash-lite" : "claude-sonnet-5";
+
 export const config = {
-  anthropicApiKey: required("ANTHROPIC_API_KEY"),
-  model: process.env.CLAUDE_MODEL ?? "claude-sonnet-5",
+  aiProvider: aiProvider as "gemini" | "anthropic",
+  anthropicApiKey: aiProvider === "anthropic" ? required("ANTHROPIC_API_KEY") : process.env.ANTHROPIC_API_KEY,
+  geminiApiKey: aiProvider === "gemini" ? required("GEMINI_API_KEY") : process.env.GEMINI_API_KEY,
+  model: process.env.AI_MODEL ?? defaultModel,
   systemPrompt:
     process.env.SYSTEM_PROMPT ??
     "Eres un asistente de WhatsApp amable, claro y conciso. Responde siempre en el idioma del usuario.",

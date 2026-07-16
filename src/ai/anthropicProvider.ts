@@ -1,11 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { config } from "./config";
-import type { ChatMessage } from "./conversationStore";
+import { config } from "../config";
+import type { ChatMessage } from "../conversationStore";
 
-const client = new Anthropic({ apiKey: config.anthropicApiKey });
+let client: Anthropic | undefined;
+
+function getClient(): Anthropic {
+  if (!client) {
+    client = new Anthropic({ apiKey: config.anthropicApiKey });
+  }
+  return client;
+}
 
 export async function generateReply(history: ChatMessage[]): Promise<string> {
-  const response = await client.messages.create({
+  const response = await getClient().messages.create({
     model: config.model,
     max_tokens: config.maxOutputTokens,
     system: config.systemPrompt,
