@@ -1,35 +1,13 @@
-import { Client, LocalAuth, Message } from "whatsapp-web.js";
-import qrcode from "qrcode-terminal";
+import express, { Request, Response } from "express";
 import { config } from "./config";
 import { generateReply } from "./ai";
 import { appendMessage, getHistory, resetHistory } from "./conversationStore";
 import { isChatRateLimited, recordChatMessage, scheduleSend } from "./rateLimiter";
+import { markAsRead, sendTextMessage } from "./whatsapp/cloudApi";
+import type { IncomingTextMessage, WhatsAppWebhookPayload } from "./whatsapp/webhookTypes";
 
-const client = new Client({
-  authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
-  puppeteer: {
-    headless: true,
-    executablePath: config.chromeExecutablePath,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  },
-});
-
-client.on("qr", (qr) => {
-  console.log("Escanea este código QR con WhatsApp (Dispositivos vinculados):");
-  qrcode.generate(qr, { small: true });
-});
-
-client.on("ready", () => {
-  console.log("Agente de WhatsApp listo.");
-});
-
-client.on("auth_failure", (message) => {
-  console.error("Fallo de autenticación:", message);
-});
-
-client.on("disconnected", (reason) => {
-  console.warn("Cliente desconectado:", reason);
-});
+const app = express();
+app.use(express.json());
 
 function isAllowedChat(chatId: string): boolean {
   if (config.allowedChatIds.length === 0) {
@@ -38,12 +16,12 @@ function isAllowedChat(chatId: string): boolean {
   return config.allowedChatIds.includes(chatId);
 }
 
-async function handleCommand(message: Message, command: string): Promise<boolean> {
+async function handleCommand(from: string, command: string): Promise<boolean> {
   switch (command) {
     case "reset": {
-      resetHistory(message.from);
+      resetHistory(from);
       const text = "Conversación reiniciada. ¿En qué puedo ayudarte?";
-      await scheduleSend(text, () => message.reply(text));
+      await scheduleSend(text, () => sendTextMessage(from, text));
       return true;
     }
     case "ayuda":
@@ -53,7 +31,7 @@ async function handleCommand(message: Message, command: string): Promise<boolean
         `${config.commandPrefix}reset - Reinicia el historial de la conversación`,
         `${config.commandPrefix}ayuda - Muestra esta ayuda`,
       ].join("\n");
-      await scheduleSend(text, () => message.reply(text));
+      await scheduleSend(text, () => sendTextMessage(from, text));
       return true;
     }
     default:
@@ -61,62 +39,76 @@ async function handleCommand(message: Message, command: string): Promise<boolean
   }
 }
 
-client.on("message", async (message: Message) => {
+async function handleIncomingMessage(message: IncomingTextMessage): Promise<void> {
   try {
-    // Evita loops con mensajes propios o de difusiones de estado.
-    if (message.fromMe || message.from === "status@broadcast") {
-      return;
-    }
+    markAsRead(message.id).catch((error) => console.error("No se pudo marcar como leído:", error));
 
-    const chat = await message.getChat();
-
-    if (chat.isGroup && !config.respondToGroups) {
+    if (message.type !== "text" || !message.text?.body.trim()) {
       return;
     }
     if (!isAllowedChat(message.from)) {
       return;
     }
-    if (message.type !== "chat" || !message.body?.trim()) {
-      return;
-    }
 
-    const body = message.body.trim();
+    const body = message.text.body.trim();
     if (body.startsWith(config.commandPrefix)) {
       const command = body.slice(config.commandPrefix.length).toLowerCase().split(/\s+/)[0];
-      if (await handleCommand(message, command)) {
+      if (await handleCommand(message.from, command)) {
         return;
       }
     }
 
-    // Protege el número: limita cuántas respuestas de IA se envían por chat
-    // en la ventana de tiempo configurada, en vez de contestar sin freno.
     if (isChatRateLimited(message.from)) {
       console.warn(`Límite de mensajes alcanzado para ${message.from}, se omite respuesta.`);
       return;
     }
 
-    await chat.sendStateTyping();
     appendMessage(message.from, { role: "user", content: body });
-
     const reply = await generateReply(getHistory(message.from));
     appendMessage(message.from, { role: "assistant", content: reply });
 
-    await scheduleSend(reply, () => message.reply(reply));
+    await scheduleSend(reply, () => sendTextMessage(message.from, reply));
     recordChatMessage(message.from);
   } catch (error) {
     console.error("Error procesando mensaje:", error);
     try {
-      await message.reply("Ocurrió un error al procesar tu mensaje. Intenta de nuevo.");
+      const text = "Ocurrió un error al procesar tu mensaje. Intenta de nuevo.";
+      await scheduleSend(text, () => sendTextMessage(message.from, text));
     } catch {
       // Ignorar errores al enviar el mensaje de error.
     }
   }
+}
+
+app.get("/webhook", (req: Request, res: Response) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode === "subscribe" && token === config.whatsappVerifyToken) {
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
 });
 
-client.initialize();
+app.post("/webhook", (req: Request, res: Response) => {
+  // Responder rápido: Meta reintenta el webhook si no recibe 200 a tiempo.
+  res.sendStatus(200);
 
-process.on("SIGINT", async () => {
-  console.log("Cerrando agente de WhatsApp...");
-  await client.destroy();
-  process.exit(0);
+  const payload = req.body as WhatsAppWebhookPayload;
+  const messages = payload.entry?.flatMap((entry) =>
+    entry.changes.flatMap((change) => change.value.messages ?? []),
+  );
+
+  for (const message of messages ?? []) {
+    handleIncomingMessage(message).catch((error) =>
+      console.error("Error no controlado procesando mensaje:", error),
+    );
+  }
+});
+
+app.listen(config.port, () => {
+  console.log(`Agente de WhatsApp escuchando en el puerto ${config.port}`);
+  console.log(`Webhook: http://localhost:${config.port}/webhook`);
 });

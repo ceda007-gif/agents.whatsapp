@@ -35,11 +35,16 @@ export const config = {
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean),
-  respondToGroups: (process.env.RESPOND_TO_GROUPS ?? "false").toLowerCase() === "true",
   commandPrefix: process.env.COMMAND_PREFIX ?? "/",
-  chromeExecutablePath: process.env.CHROME_EXECUTABLE_PATH || undefined,
 
-  // Mitigaciones anti-baneo: espaciado y límites de envío.
+  // WhatsApp Cloud API (Meta for Developers)
+  whatsappToken: required("WHATSAPP_TOKEN"),
+  whatsappPhoneNumberId: required("WHATSAPP_PHONE_NUMBER_ID"),
+  whatsappVerifyToken: required("WHATSAPP_VERIFY_TOKEN"),
+  whatsappApiVersion: optional("WHATSAPP_API_VERSION", "v23.0"),
+  port: Number(process.env.PORT ?? 3000),
+
+  // Control de costos y buen comportamiento: espaciado y límites de envío.
   minReplyDelayMs: Number(process.env.MIN_REPLY_DELAY_MS ?? 1500),
   maxReplyDelayMs: Number(process.env.MAX_REPLY_DELAY_MS ?? 6000),
   minMessageIntervalMs: Number(process.env.MIN_MESSAGE_INTERVAL_MS ?? 2500),
