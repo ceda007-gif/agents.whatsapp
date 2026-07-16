@@ -3,6 +3,7 @@ import qrcode from "qrcode-terminal";
 import { config } from "./config";
 import { generateReply } from "./ai";
 import { appendMessage, getHistory, resetHistory } from "./conversationStore";
+import { isChatRateLimited, recordChatMessage, scheduleSend } from "./rateLimiter";
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
@@ -39,20 +40,22 @@ function isAllowedChat(chatId: string): boolean {
 
 async function handleCommand(message: Message, command: string): Promise<boolean> {
   switch (command) {
-    case "reset":
+    case "reset": {
       resetHistory(message.from);
-      await message.reply("Conversación reiniciada. ¿En qué puedo ayudarte?");
+      const text = "Conversación reiniciada. ¿En qué puedo ayudarte?";
+      await scheduleSend(text, () => message.reply(text));
       return true;
+    }
     case "ayuda":
-    case "help":
-      await message.reply(
-        [
-          "Comandos disponibles:",
-          `${config.commandPrefix}reset - Reinicia el historial de la conversación`,
-          `${config.commandPrefix}ayuda - Muestra esta ayuda`,
-        ].join("\n"),
-      );
+    case "help": {
+      const text = [
+        "Comandos disponibles:",
+        `${config.commandPrefix}reset - Reinicia el historial de la conversación`,
+        `${config.commandPrefix}ayuda - Muestra esta ayuda`,
+      ].join("\n");
+      await scheduleSend(text, () => message.reply(text));
       return true;
+    }
     default:
       return false;
   }
@@ -60,6 +63,11 @@ async function handleCommand(message: Message, command: string): Promise<boolean
 
 client.on("message", async (message: Message) => {
   try {
+    // Evita loops con mensajes propios o de difusiones de estado.
+    if (message.fromMe || message.from === "status@broadcast") {
+      return;
+    }
+
     const chat = await message.getChat();
 
     if (chat.isGroup && !config.respondToGroups) {
@@ -80,13 +88,21 @@ client.on("message", async (message: Message) => {
       }
     }
 
+    // Protege el número: limita cuántas respuestas de IA se envían por chat
+    // en la ventana de tiempo configurada, en vez de contestar sin freno.
+    if (isChatRateLimited(message.from)) {
+      console.warn(`Límite de mensajes alcanzado para ${message.from}, se omite respuesta.`);
+      return;
+    }
+
     await chat.sendStateTyping();
     appendMessage(message.from, { role: "user", content: body });
 
     const reply = await generateReply(getHistory(message.from));
     appendMessage(message.from, { role: "assistant", content: reply });
 
-    await message.reply(reply);
+    await scheduleSend(reply, () => message.reply(reply));
+    recordChatMessage(message.from);
   } catch (error) {
     console.error("Error procesando mensaje:", error);
     try {

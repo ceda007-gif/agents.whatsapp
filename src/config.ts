@@ -23,4 +23,11 @@ export const config = {
   respondToGroups: (process.env.RESPOND_TO_GROUPS ?? "false").toLowerCase() === "true",
   commandPrefix: process.env.COMMAND_PREFIX ?? "/",
   chromeExecutablePath: process.env.CHROME_EXECUTABLE_PATH,
+
+  // Mitigaciones anti-baneo: espaciado y límites de envío.
+  minReplyDelayMs: Number(process.env.MIN_REPLY_DELAY_MS ?? 1500),
+  maxReplyDelayMs: Number(process.env.MAX_REPLY_DELAY_MS ?? 6000),
+  minMessageIntervalMs: Number(process.env.MIN_MESSAGE_INTERVAL_MS ?? 2500),
+  maxMessagesPerChatWindow: Number(process.env.MAX_MESSAGES_PER_CHAT_WINDOW ?? 8),
+  chatRateWindowMs: Number(process.env.CHAT_RATE_WINDOW_MS ?? 5 * 60 * 1000),
 };
