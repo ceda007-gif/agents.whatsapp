@@ -83,6 +83,19 @@ Copia la URL `https://xxxx.ngrok-free.app/webhook` y ponla en **WhatsApp → Con
 
 Una vez configurado, manda un WhatsApp al número de prueba desde el teléfono que verificaste como destinatario — el bot debería responder.
 
+## Desplegar en Railway (recomendado — sin usar terminal)
+
+Railway te da una URL pública estable de una vez, así que no necesitas ngrok ni nada corriendo en tu computadora. Todo se hace desde el navegador:
+
+1. En [railway.com](https://railway.com/) → **New Project → Deploy from GitHub repo** → selecciona este repositorio y la rama `claude/whatsapp-ai-agent-9yzm81` (o la que uses en producción).
+2. En la pestaña **Variables** del servicio, agrega una sola variable: `ADMIN_PASSWORD` con la contraseña que quieras para el panel. Dale **Deploy**.
+3. Ve a **Settings → Networking → Generate Domain** para obtener tu URL pública, algo como `https://tu-app.up.railway.app`.
+4. **Importante — crea un Volume** para no perder la configuración en cada redeploy: `⌘K`/`Ctrl+K` → *New Volume* (o clic derecho en el canvas del proyecto) → selecciona este servicio → móntalo en la ruta `/app/data`. Railway monta los volúmenes al arrancar el contenedor, así que después de crearlo redeploya el servicio una vez.
+5. Entra a `https://tu-app.up.railway.app/admin`, pon tu `ADMIN_PASSWORD`, y llena ahí todo lo demás: proveedor de IA + su API key, la info de tu negocio, el token y Phone Number ID de WhatsApp.
+6. Copia el **Verify Token** que aparece en el panel y configúralo en **WhatsApp → Configuración → Webhooks** en Meta for Developers, con la URL `https://tu-app.up.railway.app/webhook`. Suscríbete al campo `messages`.
+
+Con eso el bot queda corriendo 24/7 sin que tengas que instalar nada localmente ni volver a tocar el código — todos los ajustes futuros (cambiar el prompt del negocio, rotar el token, etc.) se hacen desde `/admin`.
+
 ## Configuración editable desde `/admin` (no va en `.env`)
 
 Estos valores se guardan en `data/settings.json` (no se commitea, tiene secretos) al llenarlos en el panel:
@@ -158,10 +171,11 @@ El bot igual incluye límites configurables para controlar costos y evitar compo
 
 ## Pasar a producción
 
-Antes de usarlo con clientes reales de forma continua:
+Si desplegaste en Railway (sección de arriba), ya tienes URL pública estable y reinicio automático incluidos. Si prefieres un VPS propio en vez de Railway, corre el proceso con `pm2` o `systemd` para que se reinicie solo si falla.
 
-- Necesitas un servidor con URL pública estable (no un túnel de ngrok) — cualquier VPS pequeño sirve, corriendo el proceso con `pm2` o `systemd` para que se reinicie solo si falla.
-- La carpeta `data/` (donde vive `settings.json`, lo que llenas en el panel) debe estar en **disco persistente** — en plataformas con sistema de archivos efímero (algunos hostings "serverless"), esa carpeta se borra en cada despliegue y tendrías que reconfigurar el panel cada vez.
+De cualquier forma, antes de usarlo con clientes reales de forma continua:
+
+- Confirma que la carpeta `data/` (donde vive `settings.json`) está en **disco persistente** (el Volume de Railway, o un disco normal en un VPS) — si no, se borra en cada redeploy y tendrías que reconfigurar el panel cada vez.
 - Para pasar del número de prueba a tu número de negocio real, Meta requiere verificar el negocio (Business Verification) en el Meta Business Manager.
 - Genera un **token de acceso permanente** (no el temporal de 24h) desde un Usuario del Sistema en la configuración de la app, y ponlo en el panel.
 
