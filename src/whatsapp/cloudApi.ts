@@ -1,14 +1,16 @@
 import { config } from "../config";
+import { getSettings } from "../settings";
 
 function apiUrl(path: string): string {
   return `https://graph.facebook.com/${config.whatsappApiVersion}/${path}`;
 }
 
 async function callGraphApi(body: Record<string, unknown>): Promise<void> {
-  const response = await fetch(apiUrl(`${config.whatsappPhoneNumberId}/messages`), {
+  const settings = getSettings();
+  const response = await fetch(apiUrl(`${settings.whatsappPhoneNumberId}/messages`), {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${config.whatsappToken}`,
+      Authorization: `Bearer ${settings.whatsappToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ messaging_product: "whatsapp", ...body }),

@@ -1,10 +1,10 @@
-import { config } from "../config";
+import { getSettings } from "../settings";
 import type { ChatMessage } from "../conversationStore";
 import { generateReply as generateAnthropicReply } from "./anthropicProvider";
 import { generateReply as generateGeminiReply } from "./geminiProvider";
 
 export function generateReply(history: ChatMessage[]): Promise<string> {
-  switch (config.aiProvider) {
+  switch (getSettings().aiProvider) {
     case "gemini":
       return generateGeminiReply(history);
     case "anthropic":

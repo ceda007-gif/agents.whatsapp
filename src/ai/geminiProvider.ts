@@ -1,25 +1,22 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
+import { getSettings } from "../settings";
 import type { ChatMessage } from "../conversationStore";
 
-let client: GoogleGenAI | undefined;
-
-function getClient(): GoogleGenAI {
-  if (!client) {
-    client = new GoogleGenAI({ apiKey: config.geminiApiKey });
-  }
-  return client;
-}
+const DEFAULT_MODEL = "gemini-3.1-flash-lite";
 
 export async function generateReply(history: ChatMessage[]): Promise<string> {
-  const response = await getClient().models.generateContent({
-    model: config.model,
+  const settings = getSettings();
+  const client = new GoogleGenAI({ apiKey: settings.geminiApiKey });
+
+  const response = await client.models.generateContent({
+    model: settings.aiModel || DEFAULT_MODEL,
     contents: history.map((message) => ({
       role: message.role === "assistant" ? "model" : "user",
       parts: [{ text: message.content }],
     })),
     config: {
-      systemInstruction: config.systemPrompt,
+      systemInstruction: settings.systemPrompt,
       maxOutputTokens: config.maxOutputTokens,
     },
   });

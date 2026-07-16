@@ -13,22 +13,11 @@ function optional(name: string, fallback: string): string {
   return process.env[name] || fallback;
 }
 
-const aiProvider = (process.env.AI_PROVIDER ?? "gemini").toLowerCase();
-if (aiProvider !== "gemini" && aiProvider !== "anthropic") {
-  throw new Error(`AI_PROVIDER inválido: "${aiProvider}". Usa "gemini" o "anthropic".`);
-}
-
-const defaultModel = aiProvider === "gemini" ? "gemini-3.1-flash-lite" : "claude-sonnet-5";
-
 export const config = {
-  aiProvider: aiProvider as "gemini" | "anthropic",
-  anthropicApiKey: aiProvider === "anthropic" ? required("ANTHROPIC_API_KEY") : process.env.ANTHROPIC_API_KEY,
-  geminiApiKey: aiProvider === "gemini" ? required("GEMINI_API_KEY") : process.env.GEMINI_API_KEY,
-  model: optional("AI_MODEL", defaultModel),
-  systemPrompt: optional(
-    "SYSTEM_PROMPT",
-    "Eres un asistente de WhatsApp amable, claro y conciso. Responde siempre en el idioma del usuario.",
-  ),
+  // Única contraseña que se toca por variable de entorno: protege el panel /admin,
+  // donde se configura todo lo demás (token de WhatsApp, API keys, prompt del negocio).
+  adminPassword: required("ADMIN_PASSWORD"),
+
   maxHistoryMessages: Number(process.env.MAX_HISTORY_MESSAGES ?? 20),
   maxOutputTokens: Number(process.env.MAX_OUTPUT_TOKENS ?? 1024),
   allowedChatIds: (process.env.ALLOWED_CHAT_IDS ?? "")
@@ -37,10 +26,6 @@ export const config = {
     .filter(Boolean),
   commandPrefix: process.env.COMMAND_PREFIX ?? "/",
 
-  // WhatsApp Cloud API (Meta for Developers)
-  whatsappToken: required("WHATSAPP_TOKEN"),
-  whatsappPhoneNumberId: required("WHATSAPP_PHONE_NUMBER_ID"),
-  whatsappVerifyToken: required("WHATSAPP_VERIFY_TOKEN"),
   whatsappApiVersion: optional("WHATSAPP_API_VERSION", "v23.0"),
   port: Number(process.env.PORT ?? 3000),
 
