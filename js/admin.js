@@ -184,6 +184,109 @@
     container.appendChild(addBtn);
   }
 
+  /**
+   * Spreadsheet-style editable table: paste a range of cells copied from
+   * Excel/Sheets starting at any cell and it fills rows/columns from there,
+   * creating new rows as needed.
+   * columns: [{key, label, type:'text'|'textarea'|'select', options?}]
+   */
+  function editableTable(container, arr, columns, newRowFactory) {
+    var wrap = el('div', 'admin-table-wrap');
+    container.appendChild(wrap);
+
+    function handlePaste(e, startRow, startCol) {
+      var text = (e.clipboardData || window.clipboardData).getData('text');
+      if (!text || (text.indexOf('\t') === -1 && text.indexOf('\n') === -1)) return; // plain single value: let default paste happen
+      e.preventDefault();
+      var rows = text.replace(/\r/g, '').split('\n');
+      if (rows.length && rows[rows.length - 1] === '') rows.pop();
+      rows.forEach(function (rowText, rOffset) {
+        var cells = rowText.split('\t');
+        var targetRow = startRow + rOffset;
+        while (arr.length <= targetRow) arr.push(newRowFactory());
+        cells.forEach(function (val, cOffset) {
+          var targetCol = startCol + cOffset;
+          if (targetCol < columns.length && columns[targetCol].type !== 'select') {
+            arr[targetRow][columns[targetCol].key] = val;
+          }
+        });
+      });
+      markDirty();
+      render();
+    }
+
+    function render() {
+      wrap.innerHTML = '';
+      var table = document.createElement('table');
+      table.className = 'admin-table';
+      var thead = document.createElement('thead');
+      var headRow = document.createElement('tr');
+      columns.forEach(function (col) {
+        var th = document.createElement('th');
+        th.textContent = col.label;
+        headRow.appendChild(th);
+      });
+      headRow.appendChild(document.createElement('th'));
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      var tbody = document.createElement('tbody');
+      arr.forEach(function (row, rowIdx) {
+        var tr = document.createElement('tr');
+        columns.forEach(function (col, colIdx) {
+          var td = document.createElement('td');
+          var input;
+          if (col.type === 'select') {
+            input = document.createElement('select');
+            col.options().forEach(function (opt) {
+              var o = document.createElement('option');
+              o.value = opt.value; o.textContent = opt.label;
+              if (opt.value === row[col.key]) o.selected = true;
+              input.appendChild(o);
+            });
+            input.addEventListener('change', function () { row[col.key] = input.value; markDirty(); });
+          } else if (col.type === 'textarea') {
+            input = document.createElement('textarea');
+            input.rows = 2;
+            input.value = row[col.key] || '';
+            input.addEventListener('input', function () { row[col.key] = input.value; markDirty(); });
+            input.addEventListener('paste', function (e) { handlePaste(e, rowIdx, colIdx); });
+          } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.value = row[col.key] || '';
+            input.addEventListener('input', function () { row[col.key] = input.value; markDirty(); });
+            input.addEventListener('paste', function (e) { handlePaste(e, rowIdx, colIdx); });
+          }
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+        var tdAction = document.createElement('td');
+        tdAction.className = 'admin-table-actions';
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button'; delBtn.className = 'btn-small btn-danger'; delBtn.textContent = '✕';
+        delBtn.title = 'Eliminar fila';
+        delBtn.addEventListener('click', function () { arr.splice(rowIdx, 1); markDirty(); render(); });
+        tdAction.appendChild(delBtn);
+        tr.appendChild(tdAction);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+    }
+
+    render();
+
+    var hint = el('p', null, 'Puedes copiar un rango de celdas desde Excel o Google Sheets y pegarlo en cualquier celda: se llenan filas y columnas automáticamente, agregando filas si hacen falta.');
+    hint.style.cssText = 'font-size:12px;color:#8C7C68;margin:2px 0 10px;';
+    container.appendChild(hint);
+
+    var addBtn = el('button', 'btn-small btn-add', '+ Agregar fila');
+    addBtn.type = 'button';
+    addBtn.addEventListener('click', function () { arr.push(newRowFactory()); markDirty(); render(); });
+    container.appendChild(addBtn);
+  }
+
   // ---------- Images tab ----------
   var ASSET_LABELS = {
     hero: 'Foto principal (hero)', logo: 'Logo del hotel',
@@ -253,11 +356,11 @@
     inputRow(s4, 'Check-in', c.rates.checkIn, function (v) { c.rates.checkIn = v; });
     inputRow(s4, 'Check-out', c.rates.checkOut, function (v) { c.rates.checkOut = v; });
     s4.appendChild(el('label', null, 'Filas de la tabla de tarifas'));
-    objectListField(s4, c.rates.rows, [
+    editableTable(s4, c.rates.rows, [
       { key: 'category', label: 'Categoría' },
       { key: 'day1', label: 'Columna 1 (ej. 1 dic)' },
       { key: 'day2', label: 'Columna 2 (ej. 2 dic)' },
-      { key: 'totalRooms', label: 'Total habitaciones' },
+      { key: 'totalRooms', label: 'Total hab.' },
       { key: 'rate', label: 'Tarifa' },
       { key: 'subtotal', label: 'Subtotal' }
     ], function () { return { category: '', day1: '', day2: '', totalRooms: '', rate: '', subtotal: '' }; });
@@ -273,12 +376,12 @@
     inputRow(s5, 'Título de la sección', c.agenda.title, function (v) { c.agenda.title = v; });
     inputRow(s5, 'Párrafo introductorio', c.agenda.intro, function (v) { c.agenda.intro = v; }, { textarea: true, rows: 3 });
     s5.appendChild(el('label', null, 'Partidas de la agenda'));
-    objectListField(s5, c.agenda.items, [
+    editableTable(s5, c.agenda.items, [
       { key: 'event', label: 'Evento' },
       { key: 'day', label: 'Día' },
       { key: 'time', label: 'Hora' },
       { key: 'place', label: 'Lugar' },
-      { key: 'pax', label: 'Personas (pax)' },
+      { key: 'pax', label: 'Pax' },
       { key: 'total', label: 'Total' },
       { key: 'description', label: 'Descripción', type: 'textarea' }
     ], function () { return { event: '', day: '', time: '', place: '', pax: '', total: '', description: '' }; });
@@ -290,7 +393,7 @@
     inputRow(s6, 'Título de la sección', c.rooms.title, function (v) { c.rooms.title = v; });
     inputRow(s6, 'Párrafo introductorio', c.rooms.intro, function (v) { c.rooms.intro = v; }, { textarea: true, rows: 3 });
     s6.appendChild(el('label', null, 'Tipos de habitación'));
-    objectListField(s6, c.rooms.types, [
+    editableTable(s6, c.rooms.types, [
       { key: 'imageKey', label: 'Foto', type: 'select', options: assetOptions },
       { key: 'alt', label: 'Texto alternativo (accesibilidad)' },
       { key: 'title', label: 'Título' },
@@ -318,7 +421,7 @@
     inputRow(s8, 'Título de la sección', c.venues.title, function (v) { c.venues.title = v; });
     inputRow(s8, 'Párrafo introductorio', c.venues.intro, function (v) { c.venues.intro = v; }, { textarea: true, rows: 3 });
     s8.appendChild(el('label', null, 'Salones / espacios'));
-    objectListField(s8, c.venues.list, [
+    editableTable(s8, c.venues.list, [
       { key: 'name', label: 'Nombre' },
       { key: 'size', label: 'Tamaño' }
     ], function () { return { name: '', size: '' }; });
@@ -326,7 +429,7 @@
     var s9 = section('Políticas del Hotel');
     inputRow(s9, 'Título de la sección', c.policies.title, function (v) { c.policies.title = v; });
     s9.appendChild(el('label', null, 'Datos rápidos (check-in, check-out, etc.)'));
-    objectListField(s9, c.policies.quickFacts, [
+    editableTable(s9, c.policies.quickFacts, [
       { key: 'label', label: 'Etiqueta' },
       { key: 'value', label: 'Valor' }
     ], function () { return { label: '', value: '' }; });

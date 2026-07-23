@@ -40,6 +40,17 @@
 .btn-add{margin-top:4px;border:1px dashed #B0703F;color:#B0703F;background:#fff;}
 .btn-danger{border-color:#B23A2E;color:#B23A2E;}
 
+.admin-table-wrap{overflow-x:auto;margin-bottom:8px;border:1px solid #E7DCCB;border-radius:3px;background:#fff;}
+.admin-table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;}
+.admin-table th{background:#F1DCC3;text-align:left;padding:8px 10px;font-weight:600;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#4A4038;white-space:nowrap;}
+.admin-table td{border-top:1px solid #ECDFCF;padding:0;vertical-align:top;}
+.admin-table td input[type=text],.admin-table td textarea,.admin-table td select{width:100%;min-width:110px;border:none;padding:8px 10px;font-size:13px;font-family:inherit;background:transparent;box-sizing:border-box;color:#2B2622;}
+.admin-table td textarea{resize:vertical;min-height:36px;}
+.admin-table td input[type=text]:focus,.admin-table td textarea:focus,.admin-table td select:focus{background:#FBF3E7;outline:1.5px solid #B0703F;outline-offset:-1.5px;}
+.admin-table tbody tr:nth-child(even){background:#FCFAF6;}
+.admin-table td.admin-table-actions{width:34px;text-align:center;border-top:1px solid #ECDFCF;}
+.admin-table td.admin-table-actions button{margin:4px auto;display:block;}
+
 .admin-image-field{display:flex;gap:16px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
 .admin-image-field img{width:120px;height:80px;object-fit:cover;border:1px solid #E7DCCB;border-radius:3px;background:#f2ece2;}
 .admin-image-field .meta{flex:1;min-width:180px;}
