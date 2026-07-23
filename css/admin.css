@@ -31,6 +31,10 @@
 .admin-field input[type=text],.admin-field textarea,.admin-field select{width:100%;padding:9px 10px;font-size:14px;border:1px solid #E7DCCB;border-radius:3px;box-sizing:border-box;font-family:inherit;color:#2B2622;}
 .admin-field textarea{resize:vertical;}
 
+.admin-checkbox-field{background:#FBF3E7;border:1px solid #ECDFCF;border-radius:3px;padding:10px 12px;margin-bottom:18px;}
+.admin-checkbox-field label{display:flex;align-items:center;gap:8px;font-size:13px;letter-spacing:0;text-transform:none;color:#2B2622;font-weight:600;margin:0;cursor:pointer;}
+.admin-checkbox-field input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+
 .admin-list{display:flex;flex-direction:column;gap:14px;margin-bottom:12px;}
 .admin-list-item{border:1px solid #ECDFCF;background:#FBF7F1;border-radius:3px;padding:16px;}
 .admin-list-actions{display:flex;gap:8px;margin-top:4px;}
@@ -48,6 +52,8 @@
 .admin-table td textarea{resize:vertical;min-height:36px;}
 .admin-table td input[type=text]:focus,.admin-table td textarea:focus,.admin-table td select:focus{background:#FBF3E7;outline:1.5px solid #B0703F;outline-offset:-1.5px;}
 .admin-table tbody tr:nth-child(even){background:#FCFAF6;}
+.admin-table td.admin-table-checkbox-cell{text-align:center;width:36px;min-width:36px;}
+.admin-table td.admin-table-checkbox-cell input[type=checkbox]{width:16px;height:16px;min-width:0;margin:10px auto;display:block;cursor:pointer;}
 .admin-table td.admin-table-actions{width:34px;text-align:center;border-top:1px solid #ECDFCF;}
 .admin-table td.admin-table-actions button{margin:4px auto;display:block;}
 

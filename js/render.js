@@ -73,7 +73,7 @@ function renderRates(c) {
 }
 
 function renderAgenda(c) {
-  const items = c.agenda.items.map(a => `
+  const items = c.agenda.items.filter(a => a.visible !== false).map(a => `
     <div class="pq-agenda-item">
       <div class="pq-agenda-item-head">
         <span class="pq-agenda-item-event">${esc(a.event)}</span>
@@ -93,7 +93,7 @@ function renderAgenda(c) {
 }
 
 function renderRooms(c, assets) {
-  const types = c.rooms.types.map(t => `
+  const types = c.rooms.types.filter(t => t.visible !== false).map(t => `
     <div class="pq-room-type">
       <img src="${esc(assets[t.imageKey])}" alt="${esc(t.alt)}">
       <div class="pq-room-type-title">${esc(t.title)}</div>
@@ -184,15 +184,19 @@ function renderQuotePage(content, assets, openSections) {
   const c = content;
   const open = openSections || new Set();
 
-  const sections = [
-    renderSection('rates', c.rates.title, open, renderRates(c), false),
-    renderSection('agenda', c.agenda.title, open, renderAgenda(c), false),
-    renderSection('rooms', c.rooms.title, open, renderRooms(c, assets), false),
-    renderSection('amenities', c.amenities.title, open, renderAmenities(c, assets), false),
-    renderSection('venues', c.venues.title, open, renderVenues(c), false),
-    renderSection('policies', c.policies.title, open, renderPolicies(c), false),
-    renderSection('contact', c.contact.title, open, renderContact(c, assets), true)
-  ].join('');
+  const sectionDefs = [
+    { key: 'rates', enabled: c.rates.enabled !== false, title: c.rates.title, body: () => renderRates(c) },
+    { key: 'agenda', enabled: c.agenda.enabled !== false, title: c.agenda.title, body: () => renderAgenda(c) },
+    { key: 'rooms', enabled: c.rooms.enabled !== false, title: c.rooms.title, body: () => renderRooms(c, assets) },
+    { key: 'amenities', enabled: c.amenities.enabled !== false, title: c.amenities.title, body: () => renderAmenities(c, assets) },
+    { key: 'venues', enabled: c.venues.enabled !== false, title: c.venues.title, body: () => renderVenues(c) },
+    { key: 'policies', enabled: c.policies.enabled !== false, title: c.policies.title, body: () => renderPolicies(c) },
+    { key: 'contact', enabled: c.contact.enabled !== false, title: c.contact.title, body: () => renderContact(c, assets) }
+  ].filter(s => s.enabled);
+
+  const sections = sectionDefs.map((s, i) =>
+    renderSection(s.key, s.title, open, s.body(), i === sectionDefs.length - 1)
+  ).join('');
 
   return `
 <div class="pq-hero">

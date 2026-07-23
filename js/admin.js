@@ -114,6 +114,20 @@
     return s;
   }
 
+  function checkboxRow(container, label, checked, onChange) {
+    var wrap = el('div', 'admin-field admin-checkbox-field');
+    var lab = document.createElement('label');
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = checked !== false;
+    input.addEventListener('change', function () { onChange(input.checked); markDirty(); });
+    lab.appendChild(input);
+    lab.appendChild(document.createTextNode(' ' + label));
+    wrap.appendChild(lab);
+    container.appendChild(wrap);
+    return wrap;
+  }
+
   function inputRow(container, label, value, onChange, opts) {
     opts = opts || {};
     var wrap = el('div', 'admin-field');
@@ -206,7 +220,7 @@
         while (arr.length <= targetRow) arr.push(newRowFactory());
         cells.forEach(function (val, cOffset) {
           var targetCol = startCol + cOffset;
-          if (targetCol < columns.length && columns[targetCol].type !== 'select') {
+          if (targetCol < columns.length && columns[targetCol].type !== 'select' && columns[targetCol].type !== 'checkbox') {
             arr[targetRow][columns[targetCol].key] = val;
           }
         });
@@ -236,7 +250,13 @@
         columns.forEach(function (col, colIdx) {
           var td = document.createElement('td');
           var input;
-          if (col.type === 'select') {
+          if (col.type === 'checkbox') {
+            td.className = 'admin-table-checkbox-cell';
+            input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = row[col.key] !== false;
+            input.addEventListener('change', function () { row[col.key] = input.checked; markDirty(); });
+          } else if (col.type === 'select') {
             input = document.createElement('select');
             col.options().forEach(function (opt) {
               var o = document.createElement('option');
@@ -352,6 +372,7 @@
     inputRow(s3, 'Texto "toca para ver detalle"', c.tapHint, function (v) { c.tapHint = v; });
 
     var s4 = section('Tarifas y Condiciones');
+    checkboxRow(s4, 'Mostrar esta sección en el sitio', c.rates.enabled, function (v) { c.rates.enabled = v; });
     inputRow(s4, 'Título de la sección', c.rates.title, function (v) { c.rates.title = v; });
     inputRow(s4, 'Check-in', c.rates.checkIn, function (v) { c.rates.checkIn = v; });
     inputRow(s4, 'Check-out', c.rates.checkOut, function (v) { c.rates.checkOut = v; });
@@ -373,10 +394,12 @@
     linesRow(s4, 'Concesiones para el grupo', c.rates.concessions, function (v) { c.rates.concessions = v; });
 
     var s5 = section('Agenda Estimada');
+    checkboxRow(s5, 'Mostrar esta sección en el sitio', c.agenda.enabled, function (v) { c.agenda.enabled = v; });
     inputRow(s5, 'Título de la sección', c.agenda.title, function (v) { c.agenda.title = v; });
     inputRow(s5, 'Párrafo introductorio', c.agenda.intro, function (v) { c.agenda.intro = v; }, { textarea: true, rows: 3 });
     s5.appendChild(el('label', null, 'Partidas de la agenda'));
     editableTable(s5, c.agenda.items, [
+      { key: 'visible', label: 'Mostrar', type: 'checkbox' },
       { key: 'event', label: 'Evento' },
       { key: 'day', label: 'Día' },
       { key: 'time', label: 'Hora' },
@@ -384,25 +407,28 @@
       { key: 'pax', label: 'Pax' },
       { key: 'total', label: 'Total' },
       { key: 'description', label: 'Descripción', type: 'textarea' }
-    ], function () { return { event: '', day: '', time: '', place: '', pax: '', total: '', description: '' }; });
+    ], function () { return { visible: true, event: '', day: '', time: '', place: '', pax: '', total: '', description: '' }; });
     inputRow(s5, 'Etiqueta total agenda', c.agenda.totalLabel, function (v) { c.agenda.totalLabel = v; });
     inputRow(s5, 'Monto total agenda', c.agenda.totalAmount, function (v) { c.agenda.totalAmount = v; });
     inputRow(s5, 'Moneda', c.agenda.totalCurrency, function (v) { c.agenda.totalCurrency = v; });
 
     var s6 = section('Habitaciones');
+    checkboxRow(s6, 'Mostrar esta sección en el sitio', c.rooms.enabled, function (v) { c.rooms.enabled = v; });
     inputRow(s6, 'Título de la sección', c.rooms.title, function (v) { c.rooms.title = v; });
     inputRow(s6, 'Párrafo introductorio', c.rooms.intro, function (v) { c.rooms.intro = v; }, { textarea: true, rows: 3 });
     s6.appendChild(el('label', null, 'Tipos de habitación'));
     editableTable(s6, c.rooms.types, [
+      { key: 'visible', label: 'Mostrar', type: 'checkbox' },
       { key: 'imageKey', label: 'Foto', type: 'select', options: assetOptions },
       { key: 'alt', label: 'Texto alternativo (accesibilidad)' },
       { key: 'title', label: 'Título' },
       { key: 'size', label: 'Tamaño' }
-    ], function () { return { imageKey: 'roomDouble', alt: '', title: '', size: '' }; });
+    ], function () { return { visible: true, imageKey: 'roomDouble', alt: '', title: '', size: '' }; });
     inputRow(s6, 'Etiqueta de amenidades', c.rooms.amenitiesLabel, function (v) { c.rooms.amenitiesLabel = v; });
     linesRow(s6, 'En todas las habitaciones', c.rooms.amenities, function (v) { c.rooms.amenities = v; });
 
     var s7 = section('Amenidades y Experiencias');
+    checkboxRow(s7, 'Mostrar esta sección en el sitio', c.amenities.enabled, function (v) { c.amenities.enabled = v; });
     inputRow(s7, 'Título de la sección', c.amenities.title, function (v) { c.amenities.title = v; });
     inputRow(s7, 'Etiqueta amenidades del hotel', c.amenities.hotelAmenitiesLabel, function (v) { c.amenities.hotelAmenitiesLabel = v; });
     linesRow(s7, 'Amenidades del hotel', c.amenities.hotelAmenities, function (v) { c.amenities.hotelAmenities = v; });
@@ -418,6 +444,7 @@
     s7.appendChild(hint7);
 
     var s8 = section('Espacios para Eventos');
+    checkboxRow(s8, 'Mostrar esta sección en el sitio', c.venues.enabled, function (v) { c.venues.enabled = v; });
     inputRow(s8, 'Título de la sección', c.venues.title, function (v) { c.venues.title = v; });
     inputRow(s8, 'Párrafo introductorio', c.venues.intro, function (v) { c.venues.intro = v; }, { textarea: true, rows: 3 });
     s8.appendChild(el('label', null, 'Salones / espacios'));
@@ -427,6 +454,7 @@
     ], function () { return { name: '', size: '' }; });
 
     var s9 = section('Políticas del Hotel');
+    checkboxRow(s9, 'Mostrar esta sección en el sitio', c.policies.enabled, function (v) { c.policies.enabled = v; });
     inputRow(s9, 'Título de la sección', c.policies.title, function (v) { c.policies.title = v; });
     s9.appendChild(el('label', null, 'Datos rápidos (check-in, check-out, etc.)'));
     editableTable(s9, c.policies.quickFacts, [
@@ -440,6 +468,7 @@
     ], function () { return { title: '', text: '' }; });
 
     var s10 = section('Contacto');
+    checkboxRow(s10, 'Mostrar esta sección en el sitio', c.contact.enabled, function (v) { c.contact.enabled = v; });
     inputRow(s10, 'Título de la sección', c.contact.title, function (v) { c.contact.title = v; });
     inputRow(s10, 'Nombre del hotel', c.contact.hotelName, function (v) { c.contact.hotelName = v; });
     inputRow(s10, 'Dirección línea 1', c.contact.addressLine1, function (v) { c.contact.addressLine1 = v; });
