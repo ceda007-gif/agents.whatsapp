@@ -122,7 +122,7 @@ img{max-width:100%;}
 .pq-policy-block-text{font-size:14px;line-height:1.6;color:var(--color-text-body);max-width:640px;}
 
 .pq-contact-row{display:flex;flex-wrap:wrap;gap:32px;}
-.pq-contact-photo{flex:1 1 320px;height:220px;object-fit:cover;}
+.pq-contact-photo{flex:1 1 320px;aspect-ratio:1/1;height:auto;width:100%;max-width:340px;object-fit:cover;display:block;}
 .pq-contact-info{flex:1 1 260px;font-size:15px;line-height:1.8;color:var(--color-text-body);}
 .pq-contact-hotel{font-weight:600;margin-bottom:4px;}
 .pq-contact-name{margin-top:18px;font-weight:600;}
