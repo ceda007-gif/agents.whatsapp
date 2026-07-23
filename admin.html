@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin &middot; Hotel Perla La Paz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+<div id="admin-login-wrap" class="admin-login-wrap">
+  <div class="admin-login-card">
+    <h1>Panel de administración</h1>
+    <p class="sub">Hotel Perla La Paz &middot; Propuesta Grupal</p>
+    <form id="admin-login-form">
+      <input type="password" id="admin-login-pw" placeholder="Contraseña" autocomplete="current-password" required>
+      <div class="admin-error" id="admin-login-error"></div>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div id="admin-dash-wrap" style="display:none;">
+  <div class="admin-topbar">
+    <h1>Admin &middot; Perla</h1>
+    <div class="admin-tabs">
+      <button type="button" class="admin-tab active" data-tab="es">Español</button>
+      <button type="button" class="admin-tab" data-tab="en">English</button>
+      <button type="button" class="admin-tab" data-tab="images">Imágenes</button>
+    </div>
+    <span class="admin-dirty" id="admin-dirty"></span>
+    <button type="button" class="admin-btn secondary" id="admin-preview">Ver sitio</button>
+    <button type="button" class="admin-btn secondary" id="admin-save">Guardar cambios</button>
+    <button type="button" class="admin-btn" id="admin-download">Descargar HTML</button>
+    <button type="button" class="admin-btn danger" id="admin-logout">Cerrar sesión</button>
+  </div>
+
+  <div class="admin-main" id="admin-main"></div>
+
+  <div class="admin-main" style="padding-top:0;">
+    <section class="admin-section">
+      <h2>Cambiar contraseña</h2>
+      <form id="admin-pw-form">
+        <div class="admin-pwrow">
+          <div class="admin-field"><label>Contraseña actual</label><input type="password" id="admin-pw-current" required></div>
+          <div class="admin-field"><label>Nueva contraseña</label><input type="password" id="admin-pw-new" required></div>
+          <div class="admin-field"><label>Confirmar</label><input type="password" id="admin-pw-confirm" required></div>
+          <button type="submit" class="admin-btn secondary" style="height:38px;">Actualizar</button>
+        </div>
+        <div id="admin-pw-msg" style="font-size:13px;margin-top:8px;"></div>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h2>Zona de riesgo</h2>
+      <p style="font-size:13px;color:#8C7C68;">Restablece todo el contenido y las imágenes a los valores originales del diseño. Esta acción no se puede deshacer.</p>
+      <button type="button" class="admin-btn danger" id="admin-reset">Restablecer valores originales</button>
+    </section>
+  </div>
+</div>
+
+<div class="admin-toast" id="admin-toast"></div>
+
+<script src="js/content.js"></script>
+<script src="js/store.js"></script>
+<script src="js/render.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
