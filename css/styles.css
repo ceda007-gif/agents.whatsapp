@@ -99,10 +99,8 @@ img{max-width:100%;}
 .pq-room-type-size{font-size:13px;color:var(--color-text-muted);margin-top:2px;}
 .pq-rooms-amenities{margin-top:32px;}
 
-.pq-amenities-photos{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:28px;}
-.pq-amenities-photos img{height:220px;object-fit:cover;}
-.pq-amenities-photos img:nth-child(1){flex:2 1 320px;}
-.pq-amenities-photos img:nth-child(2),.pq-amenities-photos img:nth-child(3){flex:1 1 220px;}
+.pq-amenities-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:28px;}
+.pq-amenities-photos img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
 
 .pq-activity-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px;}
 .pq-activity-group-title{font-size:14px;font-weight:600;margin-bottom:8px;}
