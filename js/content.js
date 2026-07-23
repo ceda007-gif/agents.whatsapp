@@ -18,7 +18,7 @@ window.DEFAULT_CONTENT = {
   es: {
     hero: {
       eyebrow: 'Bienestar y equilibrio en el corazón de La Paz',
-      headline: 'Propuesta Grupal'
+      headline: 'Propuesta de Grupo'
     },
     meta: {
       contactLabel: 'Contacto', contact: 'Ximena Morales',

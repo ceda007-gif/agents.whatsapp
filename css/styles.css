@@ -33,7 +33,7 @@ img{max-width:100%;}
 
 /* META CARD */
 .pq-meta-wrap{max-width:920px;margin:-46px auto 0;position:relative;z-index:2;padding:0 20px;}
-.pq-meta-card{background:#fff;border:1px solid var(--color-border2);border-radius:2px;box-shadow:0 18px 40px -20px rgba(60,40,20,0.35);padding:28px 32px;display:flex;flex-wrap:wrap;gap:24px 40px;justify-content:space-between;}
+.pq-meta-card{background:#fff;border:1px solid var(--color-border2);border-radius:2px;box-shadow:0 18px 40px -20px rgba(60,40,20,0.35);padding:28px 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:24px 32px;}
 .pq-meta-label{font-size:11px;letter-spacing:1.5px;color:var(--color-accent);text-transform:uppercase;margin-bottom:4px;}
 .pq-meta-value{font-size:15px;}
 
